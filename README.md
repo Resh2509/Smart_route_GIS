@@ -129,51 +129,44 @@ To overcome the cost, fragility, and rapid moisture-saturation of sub-surface ch
 
 ## 🗄️ Database Schema (`aegisflow.db`)
 
-sql
--- 1. Users & Municipal Officials Table
-CREATE TABLE users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    email TEXT UNIQUE NOT NULL,       -- Strictly enforced domain validation
-    password_hash TEXT NOT NULL,      -- Bcrypt 60-character hash
-    role TEXT NOT NULL,               -- 'citizen' or 'municipal'
-    phone TEXT,
-    ward TEXT,                        -- e.g., 'Ward 178'
-    department TEXT,                  -- e.g., 'Stormwater Drainage'
-    status TEXT DEFAULT 'Available',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                             DATABASE SCHEMA OVERVIEW                            │
+│                               (aegisflow.db)                                    │
+└─────────────────────────────────────────────────────────────────────────────────┘
 
--- 2. Incidents & Civic Hazards Table
-CREATE TABLE incidents (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    ticket_id TEXT UNIQUE NOT NULL,   -- e.g., 'AF-9102'
-    citizen_name TEXT NOT NULL,
-    locality TEXT NOT NULL,
-    hazard_type TEXT NOT NULL,        -- Surcharge, Clog, Slab Collapse, Gas Leak
-    street_address TEXT NOT NULL,
-    landmark TEXT,
-    specific_details TEXT,
-    assigned_officer_id INTEGER REFERENCES users(id),
-    status TEXT DEFAULT 'Dispatched', -- 'Dispatched', 'Pumping Active', 'Resolved'
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+┌───────────────────────────────────────┐         ┌───────────────────────────────────────┐
+│                 users                 │         │               incidents               │
+├───────────────────┬───────────────────┤         ├───────────────────┬───────────────────┤
+│ id                │ INTEGER [PK, AI]  │◄──┐     │ id                │ INTEGER [PK, AI]  │
+│ name              │ TEXT [NN]         │   │     │ ticket_id         │ TEXT [UQ, NN]     │
+│ email             │ TEXT [UQ, NN]     │   │     │ citizen_name      │ TEXT [NN]         │
+│ password_hash     │ TEXT [NN]         │   │     │ locality          │ TEXT [NN]         │
+│ role              │ TEXT [NN]         │   │     │ hazard_type       │ TEXT [NN]         │
+│ phone             │ TEXT              │   │     │ street_address    │ TEXT [NN]         │
+│ ward              │ TEXT              │   │     │ landmark          │ TEXT              │
+│ department        │ TEXT              │   │     │ specific_details  │ TEXT              │
+│ status            │ TEXT [DEF]        │   └─────┤ assigned_officer_id│ INTEGER [FK]     │
+│ created_at        │ TIMESTAMP [DEF]   │         │ status            │ TEXT [DEF]        │
+└───────────────────┴───────────────────┘         │ created_at        │ TIMESTAMP [DEF]   │
+                                                  └───────────────────┴───────────────────┘
 
--- 3. Telemetry & Subterranean Diagnostics Table
-CREATE TABLE telemetry_logs (
-    log_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    node_id TEXT NOT NULL,            -- e.g., 'BF-NODE-178A'
-    flow_rate REAL,                   -- L/min
-    water_level REAL,                 -- Depth %
-    chamber_pressure REAL,            -- Absolute kPa
-    gauge_differential REAL,          -- Delta P (mbar)
-    inferred_gas_ppm REAL,            -- Surrogate H2S/CH4 Index
-    classification TEXT,              -- 'LAMINAR', 'AIR_BIND', 'CLOG', 'GAS_SURGE'
-    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                                 telemetry_logs                                  │
+├───────────────────────────────┬─────────────────────────────────────────────────┤
+│ log_id                        │ INTEGER [PK, AUTOINCREMENT]                     │
+│ node_id                       │ TEXT [NOT NULL]                                 │
+│ flow_rate                     │ REAL (L/min)                                    │
+│ water_level                   │ REAL (Depth %)                                  │
+│ chamber_pressure              │ REAL (Absolute kPa)                             │
+│ gauge_differential            │ REAL (Delta P in mbar)                          │
+│ inferred_gas_ppm              │ REAL (Surrogate H2S / CH4 Index)                │
+│ classification                │ TEXT ('LAMINAR', 'AIR_BIND', 'CLOG', etc.)      │
+│ recorded_at                   │ TIMESTAMP [DEFAULT CURRENT_TIMESTAMP]           │
+└───────────────────────────────┴─────────────────────────────────────────────────┘
 
-
-
+Key Legends:
+• [PK] Primary Key       • [NN]  Not Null            • [DEF] Default Value Set
+• [AI] Auto Increment    • [UQ]  Unique Constraint   • [FK]  Foreign Key (references users.id)
 ---
 
 ## 🚀 Quick Start & Installation
